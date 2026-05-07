@@ -98,11 +98,34 @@ function AdminProducts() {
           {["PRODUCT", "CATEGORY", "PRICE", "IMG", "STATUS", "ACTIONS"].map(h => <span key={h} style={S.label}>{h}</span>)}
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "64px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "24px", height: "24px", border: "2px solid #c8a96e", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-            <p style={{ fontFamily: "Montserrat, sans-serif", fontSize: "11px", color: "var(--text-faint)", letterSpacing: "2px" }}>Loading products...</p>
+       {loading ? (
+  <>
+    {[...Array(5)].map((_, i) => (
+      <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 60px 80px 130px", padding: "14px 24px", borderBottom: "1px solid rgba(200,169,110,0.07)", alignItems: "center", gap: "12px" }}>
+        {/* Product */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "6px", background: "rgba(200,169,110,0.1)", animation: "pulse 1.5s ease-in-out infinite", flexShrink: 0 }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ height: "12px", width: "120px", borderRadius: "4px", background: "rgba(200,169,110,0.1)", animation: "pulse 1.5s ease-in-out infinite" }} />
+            <div style={{ height: "10px", width: "80px", borderRadius: "4px", background: "rgba(200,169,110,0.07)", animation: "pulse 1.5s ease-in-out infinite" }} />
           </div>
+        </div>
+        {/* Category */}
+        <div style={{ height: "12px", width: "70px", borderRadius: "4px", background: "rgba(200,169,110,0.08)", animation: "pulse 1.5s ease-in-out infinite" }} />
+        {/* Price */}
+        <div style={{ height: "12px", width: "50px", borderRadius: "4px", background: "rgba(200,169,110,0.08)", animation: "pulse 1.5s ease-in-out infinite" }} />
+        {/* Image */}
+        <div style={{ width: "32px", height: "32px", borderRadius: "4px", background: "rgba(200,169,110,0.08)", animation: "pulse 1.5s ease-in-out infinite" }} />
+        {/* Status */}
+        <div style={{ height: "12px", width: "45px", borderRadius: "4px", background: "rgba(200,169,110,0.08)", animation: "pulse 1.5s ease-in-out infinite" }} />
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div style={{ height: "28px", width: "52px", borderRadius: "4px", background: "rgba(200,169,110,0.1)", animation: "pulse 1.5s ease-in-out infinite" }} />
+          <div style={{ height: "28px", width: "32px", borderRadius: "4px", background: "rgba(192,57,43,0.08)", animation: "pulse 1.5s ease-in-out infinite" }} />
+        </div>
+      </div>
+    ))}
+  </>
         ) : paginated.length === 0 ? (
           <div style={{ textAlign: "center", padding: "64px" }}>
             <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "24px", color: "#3d2f1a", fontStyle: "italic" }}>{search.trim() ? `No results for "${search}"` : "No products found"}</p>

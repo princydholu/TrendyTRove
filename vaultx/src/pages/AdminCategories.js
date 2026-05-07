@@ -372,11 +372,32 @@ function AdminCategories() {
 
         {/* Body */}
         {loading ? (
-          <div className="text-center py-16 flex flex-col items-center gap-3">
-            <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#c8a96e", borderTopColor: "transparent" }} />
-            <p style={{ fontFamily: "Montserrat, sans-serif", fontSize: "11px", color: "var(--text-faint)", letterSpacing: "2px" }}>Loading categories...</p>
-          </div>
-        ) : paginated.length === 0 ? (
+  <>
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="grid grid-cols-[2fr_80px_1.5fr_60px_80px_120px] px-6 py-4 items-center"
+        style={{ borderBottom: "1px solid rgba(200,169,110,0.07)" }}>
+        {/* Name */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.1)" }} />
+          <div className="h-3 w-32 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.1)" }} />
+        </div>
+        {/* Level */}
+        <div className="h-5 w-12 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.1)" }} />
+        {/* Parent */}
+        <div className="h-3 w-20 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.08)" }} />
+        {/* Image */}
+        <div className="w-8 h-8 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.08)" }} />
+        {/* Status */}
+        <div className="h-3 w-12 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.08)" }} />
+        {/* Actions */}
+        <div className="flex gap-2">
+          <div className="h-7 w-14 rounded animate-pulse" style={{ background: "rgba(200,169,110,0.1)" }} />
+          <div className="h-7 w-8 rounded animate-pulse" style={{ background: "rgba(192,57,43,0.1)" }} />
+        </div>
+      </div>
+    ))}
+  </>
+) : paginated.length === 0 ? (
           <div className="text-center py-16">
             <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "24px", color: "#3d2f1a", fontStyle: "italic" }}>No categories found</p>
           </div>
