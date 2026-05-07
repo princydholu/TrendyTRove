@@ -43,7 +43,8 @@ function Login() {
     setLoading(true);
     try {
       const { data } = await API.post("/auth/admin/login", { email: formData.email.trim(), password: formData.password });
-      localStorage.setItem("trendytroveToken", data.token);
+      localStorage.setItem("adminToken", data.token);
+
       dispatch(loginSuccess(data.user));
       navigate("/dashboard");
     } catch (err) { setServerError(err.response?.data?.message || "Server error!"); }
