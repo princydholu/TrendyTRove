@@ -1,0 +1,11 @@
+{
+  "name": "trendytrove",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently --raw \"npm start --prefix frontend\" \"npm start --prefix vaultx\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "cross-env": "^7.0.3"
+  }
+}

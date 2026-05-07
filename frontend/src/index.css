@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply text-[11px] tracking-[2px] font-medium pb-1 relative transition-all duration-300;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-px bg-current scale-x-0 transition-transform duration-300;
+  }
+
+  .nav-link:hover::after {
+    @apply scale-x-100;
+  }
+
+  .btn-outline {
+    @apply border border-brand-black text-brand-black text-[9px] tracking-[1.5px] font-semibold px-4 py-1.5 transition-all duration-300 hover:bg-brand-black hover:text-white;
+  }
+}
