@@ -1,237 +1,180 @@
-const Cart = require("../models/Cart");
+const Cart    = require("../models/Cart");
 const Product = require("../models/Product");
 
-// ✅ ADD TO CART
-// Logic: 
-// 1. Product exist karta hai?
-// 2. User ka cart hai?
-//    - Hai to same product same size same color already hai?
-//      - Hai to quantity badha do
-//      - Nahi to naya item add karo
-//    - Nahi to naya cart banao
+//  ADD TO CART
 exports.addToCart = async (req, res) => {
   try {
     const { productId, quantity, size, color } = req.body;
     const userId = req.user._id;
 
-    // Product exist karta hai?
+    const normalizedColor = (color || "").toLowerCase().trim();
+    const normalizedSize  = (size  || "").toLowerCase().trim();
+
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Stock check karo
-    if (product.stock < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient stock",
-      });
-    }
+    const variant =
+      product.variants.find(
+        (v) => v.color.toLowerCase().trim() === normalizedColor
+      ) || product.variants[0];
 
-    // User ka cart dhundo
+    const sizeObj =
+      variant?.sizes.find(
+        (s) => s.size.toLowerCase().trim() === normalizedSize
+      ) || variant?.sizes[0];
+
+    const price = sizeObj?.sellingPrice || 0;
+
     let cart = await Cart.findOne({ userId });
 
     if (cart) {
-      // Cart hai — same product same size same color check karo
       const existingItem = cart.items.find(
         (item) =>
-          item.productId.toString() === productId &&
-          item.size === size &&
-          item.color === color
+          item.productId.toString() === productId.toString() &&
+          item.size.toLowerCase().trim()  === normalizedSize  &&
+          item.color.toLowerCase().trim() === normalizedColor   
       );
 
       if (existingItem) {
-        // ✅ Already hai — quantity badha do
-        existingItem.quantity += quantity || 1;
+        //  SET quantity, don't increment — frontend sends exact qty
+        existingItem.quantity = quantity || existingItem.quantity;
       } else {
-        // ✅ Naya item add karo
         cart.items.push({
           productId,
           quantity: quantity || 1,
-          size,
-          color,
-          price: product.price,
+          size:  variant?.sizes.find(
+            (s) => s.size.toLowerCase().trim() === normalizedSize
+          )?.size || variant?.sizes[0]?.size || size, 
+          color: variant?.color || color,              
+          price,
         });
       }
     } else {
-      // ✅ Naya cart banao
       cart = new Cart({
         userId,
-        items: [
-          {
-            productId,
-            quantity: quantity || 1,
-            size,
-            color,
-            price: product.price,
-          },
-        ],
+        items: [{
+          productId,
+          quantity: quantity || 1,
+          size:  sizeObj?.size  || size,
+          color: variant?.color || color,
+          price,
+        }],
       });
     }
 
-    // Total calculate karo
     cart.calculateTotal();
     await cart.save();
+    await cart.populate("items.productId", "name variants");
 
-    // Cart populate karke bhejo
-    await cart.populate("items.productId", "name images price");
-
-    res.status(200).json({
-      success: true,
-      message: "Item added to cart",
-      cart,
-    });
+    res.status(200).json({ success: true, message: "Item added to cart", cart });
   } catch (error) {
+    console.error("ADD TO CART ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ GET CART
-// Logic: User ka cart dhundo aur products ki details ke sath bhejo
+//  GET CART
 exports.getCart = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const cart = await Cart.findOne({ userId }).populate(
       "items.productId",
-      "name images price stock"
+      "name variants"
     );
 
     if (!cart) {
       return res.status(200).json({
         success: true,
-        message: "Cart is empty",
-        cart: {
-          items: [],
-          totalPrice: 0,
-        },
+        cart: { items: [], totalPrice: 0 },
       });
     }
 
     res.status(200).json({ success: true, cart });
   } catch (error) {
+    console.error("GET CART ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ UPDATE QUANTITY
-// Logic: Item dhundo aur quantity update karo
+//  UPDATE QUANTITY
 exports.updateQuantity = async (req, res) => {
   try {
     const { quantity } = req.body;
-    const userId = req.user._id;
-    const itemId = req.params.itemId;
+    const userId  = req.user._id;
+    const itemId  = req.params.itemId;
 
     if (quantity < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Quantity must be at least 1",
-      });
+      return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
     }
 
     const cart = await Cart.findOne({ userId });
-
     if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    // Item dhundo
     const item = cart.items.id(itemId);
     if (!item) {
-      return res.status(404).json({
-        success: false,
-        message: "Item not found in cart",
-      });
+      return res.status(404).json({ success: false, message: "Item not found in cart" });
     }
 
-
-    // Quantity update karo
     item.quantity = quantity;
-
-    // Total recalculate karo
     cart.calculateTotal();
     await cart.save();
+    await cart.populate("items.productId", "name variants");
 
-    await cart.populate("items.productId", "name images price");
-
-    res.status(200).json({
-      success: true,
-      message: "Quantity updated",
-      cart,
-    });
+    res.status(200).json({ success: true, message: "Quantity updated", cart });
   } catch (error) {
+    console.error("UPDATE QUANTITY ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ REMOVE ITEM FROM CART
-// Logic: Item dhundo aur remove karo
+//  REMOVE ITEM
 exports.removeItem = async (req, res) => {
   try {
     const userId = req.user._id;
     const itemId = req.params.itemId;
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOneAndUpdate (
+      { userId },
+      { $pull: { items: { _id: itemId } } },
+      { returnDocument: "after" }  
+    ).populate("items.productId", "name variants");
 
     if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    // Item remove karo
-    cart.items = cart.items.filter(
-      (item) => item._id.toString() !== itemId
-    );
-
-    // Total recalculate karo
     cart.calculateTotal();
     await cart.save();
 
-    await cart.populate("items.productId", "name images price");
-
-    res.status(200).json({
-      success: true,
-      message: "Item removed from cart",
-      cart,
-    });
+    res.status(200).json({ success: true, message: "Item removed", cart });
   } catch (error) {
+    console.error("REMOVE ITEM ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ CLEAR CART
-// Logic: Poora cart empty karo
+//  CLEAR CART
 exports.clearCart = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const cart = await Cart.findOne({ userId });
-
     if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    cart.items = [];
+    cart.items     = [];
     cart.totalPrice = 0;
     await cart.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Cart cleared",
-      cart,
-    });
+    res.status(200).json({ success: true, message: "Cart cleared", cart });
   } catch (error) {
+    console.error("CLEAR CART ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -4,14 +4,29 @@ const bcrypt = require("bcryptjs");
 // GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments();
+    const users = await User.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("-password");
+
     res.status(200).json({
       success: true,
-      count: users.length,
       users,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      },
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (err) {
+    console.error("Get All User Error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -44,11 +59,13 @@ exports.addUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    const normalizedRole = role.toLowerCase(); 
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
     });
 
     res.status(201).json({
@@ -62,6 +79,7 @@ exports.addUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Add User Error:", error.message); 
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -80,6 +98,7 @@ exports.getUserById = async (req, res) => {
 
     res.status(200).json({ success: true, user });
   } catch (error) {
+    console.error("Get User By Id Error:", error.message); 
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -117,9 +136,9 @@ exports.editUser = async (req, res) => {
       user.password = await bcrypt.hash(password, 12);
     }
 
-    if (name)  user.name  = name;
+    if (name) user.name = name;
     if (email) user.email = email;
-    if (role)  user.role  = role;
+    if (role) user.role = role.toLowerCase();
 
     await user.save();
 
@@ -134,6 +153,7 @@ exports.editUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Edit User Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -157,6 +177,75 @@ exports.deleteUser = async (req, res) => {
       message: "User deleted successfully",
     });
   } catch (error) {
+    console.error("Delete User Error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// GET PROFILE
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Get My Profile ERROR:", error.message); 
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// UPDATE PROFILE
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (name) user.name = name.trim();
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+      user.email = email;
+    }
+
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: "Current password is incorrect" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be at least 6 characters",
+        });
+      }
+      user.password = await bcrypt.hash(newPassword, 12);
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("UPDATE My Profile ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

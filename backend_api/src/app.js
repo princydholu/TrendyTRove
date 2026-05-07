@@ -4,10 +4,9 @@ const app = express();
 
 // CORS
 app.use(cors({
-  origin: [
-    "http://localhost:3000",  // Frontend
-    "http://localhost:3001",  // Admin Panel
-  ],
+  origin: function(origin, callback) {
+    callback(null, true); 
+  },
   credentials: true,
 }));
 
@@ -15,16 +14,18 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/auth",       require("./routes/authRoutes"));
+app.use("/api/users",      require("./routes/userRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
-app.use("/api/products", require("./routes/productRoutes"));
-app.use("/api/upload", require("./routes/uploadRoutes"));
-app.use("/api/cart", require("./routes/cartRoutes"));
+app.use("/api/products",   require("./routes/productRoutes"));
+app.use("/api/upload",     require("./routes/uploadRoutes"));
+app.use("/api/cart",       require("./routes/cartRoutes"));
+app.use("/api/orders",     require("./routes/orderRoutes"));
+app.use("/api/wishlist",   require("./routes/wishlistRoutes"));
 
 // Health Check
 app.get("/", (req, res) => {
-  res.json({ message: " Home Decor API is running!" });
+  res.json({ message: "Home Decor API is running!" });
 });
 
 module.exports = app;

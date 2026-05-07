@@ -21,4 +21,4 @@ router.post("/", protect, isAdmin, addCategory);
 router.put("/:id", protect, isAdmin, editCategory);
 router.delete("/:id", protect, isAdmin, deleteCategory);
 
-module.exports = router;
+module.exports = router; 

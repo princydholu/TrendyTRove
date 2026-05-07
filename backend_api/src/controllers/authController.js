@@ -8,12 +8,11 @@ const generateToken = (userId) => {
   });
 };
 
-//Sign up
+// SIGNUP
 exports.signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // confirmPassword check hatao
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -35,7 +34,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || "user",
+      role: role ? role.toLowerCase() : "user", 
     });
 
     const token = generateToken(user._id);
@@ -52,9 +51,11 @@ exports.signup = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Auth Token:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 // LOGIN
 exports.login = async (req, res) => {
   try {
@@ -90,6 +91,7 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Login Not Successfull:", error.message); 
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -107,7 +109,7 @@ exports.adminLogin = async (req, res) => {
       });
     }
 
-    if (user.role !== "admin") {
+    if (user.role !== "admin") { 
       return res.status(403).json({
         success: false,
         message: "Access denied! Admins only.",
@@ -136,6 +138,7 @@ exports.adminLogin = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Invalid Admin Login:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

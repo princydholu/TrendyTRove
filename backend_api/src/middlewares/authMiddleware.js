@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-//  Token verify karo
+// Token verify karo
 exports.protect = async (req, res, next) => {
   try {
     let token;
@@ -21,13 +21,14 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).select("-password");
     next();
   } catch (error) {
+    console.error("Token Invalid ERROR:", error.message);
     res.status(401).json({ message: "Token invalid or expired" });
   }
 };
 
-//  Sirf Admin allowed
+// Sirf Admin allowed
 exports.isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+  if (req.user && req.user.role === "admin")  { 
     next();
   } else {
     res.status(403).json({

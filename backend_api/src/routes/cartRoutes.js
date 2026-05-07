@@ -10,7 +10,6 @@ const {
 
 const { protect } = require("../middlewares/authMiddleware");
 
-// ✅ Saare cart routes protected hain — login zaroori hai
 router.post("/", protect, addToCart);
 router.get("/", protect, getCart);
 router.put("/:itemId", protect, updateQuantity);

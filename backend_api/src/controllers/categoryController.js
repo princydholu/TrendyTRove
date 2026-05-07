@@ -1,16 +1,34 @@
 const Category = require("../models/Category");
 
-// ✅ GET ALL CATEGORIES
+//  GET ALL CATEGORIES
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true });
-    res.status(200).json({ success: true, categories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    const page  = parseInt(req.query.page)  || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip  = (page - 1) * limit;
+
+    const total      = await Category.countDocuments();
+    const categories = await Category.find()
+      .sort({ createdAt: -1 })        
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      categories,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    console.error("Get All Category Error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ GET MAIN CATEGORIES (level 1)
+//  GET MAIN CATEGORIES (level 1)
 exports.getMainCategories = async (req, res) => {
   try {
     const categories = await Category.find({ 
@@ -19,11 +37,12 @@ exports.getMainCategories = async (req, res) => {
     });
     res.status(200).json({ success: true, categories });
   } catch (error) {
+    console.error("Main Category Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ GET CHILDREN OF A CATEGORY
+//  GET CHILDREN OF A CATEGORY
 exports.getChildCategories = async (req, res) => {
   try {
     const children = await Category.find({
@@ -32,11 +51,12 @@ exports.getChildCategories = async (req, res) => {
     });
     res.status(200).json({ success: true, children });
   } catch (error) {
+    console.error("Get Children Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ ADD CATEGORY (Admin)
+//  ADD CATEGORY (Admin)
 exports.addCategory = async (req, res) => {
   try {
     const { name, parentId, level, image } = req.body;
@@ -61,11 +81,12 @@ exports.addCategory = async (req, res) => {
       category,
     });
   } catch (error) {
+    console.error("Add category Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ EDIT CATEGORY (Admin)
+//  EDIT CATEGORY (Admin)
 exports.editCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -91,11 +112,12 @@ exports.editCategory = async (req, res) => {
       category,
     });
   } catch (error) {
+    console.error("Edit Category Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ DELETE CATEGORY (Admin)
+//  DELETE CATEGORY (Admin)
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -114,6 +136,7 @@ exports.deleteCategory = async (req, res) => {
       message: "Category deleted successfully",
     });
   } catch (error) {
+    console.error("Delete Category Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

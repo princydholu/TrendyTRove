@@ -1,188 +1,141 @@
 const Product = require("../models/Product");
 const { cloudinary } = require("../config/cloudinary");
 
-// ✅ GET ALL PRODUCTS (Filter + Sort)
+// getAllProducts
 exports.getAllProducts = async (req, res) => {
   try {
-    const { category, subCategory, size, color, sort } = req.query;
+    const page  = parseInt(req.query.page)  || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip  = (page - 1) * limit;
 
-    let filter = { isActive: true };
+  
+    const filter = {};
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
 
-    if (category)    filter.category    = category;
-    if (subCategory) filter.subCategory = subCategory;
-    if (size)        filter.sizes       = size;
-    if (color)       filter.colors      = color;
+ 
+    if (req.query.search) {
+      filter.name = { $regex: req.query.search, $options: "i" };
+    }
 
-    let sortOption = {};
-    if (sort === "low")  sortOption.price = 1;
-    if (sort === "high") sortOption.price = -1;
-
+    const total    = await Product.countDocuments(filter);
     const products = await Product.find(filter)
-      .populate("category", "name")
-      .populate("subCategory", "name")
-      .sort(sortOption);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("category", "name");
 
     res.status(200).json({
       success: true,
-      count: products.length,
       products,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      },
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (err) {
+    console.error("Get All Product Error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ GET SINGLE PRODUCT
+//  GET SINGLE PRODUCT
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category", "name")
-      .populate("subCategory", "name");
+      .populate("category", "name");
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     res.status(200).json({ success: true, product });
   } catch (error) {
+    console.error("GET PRODUCT ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ ADD PRODUCT WITH IMAGE
+//  ADD PRODUCT
 exports.addProduct = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      category,
-      subCategory,
-      sizes,
-      colors,
-      price,
-    } = req.body;
+    const { name, description, category, variants, isActive } = req.body;
 
-    if (!name || !category || !price) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, category and price are required",
-      });
+    if (!name || !category) {
+      return res.status(400).json({ success: false, message: "Name and category are required" });
     }
 
-    // ✅ Cloudinary images
-    let images = [];
-    if (req.files && req.files.length > 0) {
-      images = req.files.map((file) => file.path);
-    }
+    const parsedVariants = typeof variants === "string"
+      ? JSON.parse(variants)
+      : variants || [];
 
     const product = await Product.create({
       name,
       description,
       category,
-      subCategory,
-      images,
-      sizes: sizes ? JSON.parse(sizes) : [],
-      colors: colors ? JSON.parse(colors) : [],
-      price,
+      variants:  parsedVariants,
+      isActive:  isActive !== undefined ? isActive : true,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Product created successfully",
-      product,
-    });
+    res.status(201).json({ success: true, message: "Product created successfully", product });
   } catch (error) {
+    console.error("ADD PRODUCT ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ EDIT PRODUCT WITH IMAGE
+//  EDIT PRODUCT
 exports.editProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    const {
-      name,
-      description,
-      category,
-      subCategory,
-      sizes,
-      colors,
-      price,
-      isActive,
-    } = req.body;
-
-    // ✅ New images upload hui hain?
-    if (req.files && req.files.length > 0) {
-      // Purani images Cloudinary se delete karo
-      for (let img of product.images) {
-        const publicId = img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(
-          `home-decor-products/${publicId}`
-        );
-      }
-      product.images = req.files.map((file) => file.path);
-    }
+    const { name, description, category, variants, isActive } = req.body;
 
     if (name)        product.name        = name;
     if (description) product.description = description;
     if (category)    product.category    = category;
-    if (subCategory) product.subCategory = subCategory;
-    if (sizes)       product.sizes       = JSON.parse(sizes);
-    if (colors)      product.colors      = JSON.parse(colors);
-    if (price)       product.price       = price;
-    if (stock)       product.stock       = stock;
     if (isActive !== undefined) product.isActive = isActive;
 
-    await product.save();
+    if (variants) {
+      product.variants = typeof variants === "string"
+        ? JSON.parse(variants)
+        : variants;
+    }
 
-    res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
+    await product.save();
+    res.status(200).json({ success: true, message: "Product updated", product });
   } catch (error) {
+    console.error("EDIT PRODUCT ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✅ DELETE PRODUCT
+//  DELETE PRODUCT
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // ✅ Cloudinary se images delete karo
-    for (let img of product.images) {
-      const publicId = img.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(
-        `home-decor-products/${publicId}`
-      );
+    for (const variant of product.variants || []) {
+      for (const img of variant.images || []) {
+        try {
+          const publicId = img.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(`home-decor-products/${publicId}`);
+        } catch {}
+      }
     }
 
     await Product.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-    });
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
+    console.error("DELETE PRODUCT ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -32,7 +32,7 @@ const cartSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,  // ✅ Ek user ka ek hi cart hoga
+      unique: true,  
     },
     items: [cartItemSchema],
     totalPrice: {
@@ -43,7 +43,7 @@ const cartSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Total price automatically calculate hoga
+//  Total price automatically calculate 
 cartSchema.methods.calculateTotal = function () {
   this.totalPrice = this.items.reduce((total, item) => {
     return total + item.price * item.quantity;
