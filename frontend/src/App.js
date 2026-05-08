@@ -36,7 +36,7 @@ function App() {
     <Router>
       <ScrollToTop />
       <Routes>
-           {/* ✅ These OUTSIDE Layout - nginx handles them */}
+           {/*  These OUTSIDE Layout - nginx handles them */}
         <Route path="/admin" element={null} />
         <Route path="/admin/*" element={null} />
         <Route path="/vaultx" element={null} />

@@ -12,6 +12,7 @@ import Product from "./pages/product";
 import AddProduct from "./pages/Addproduct";
 import EditProduct from "./pages/Editproduct";
 import Orders from "./pages/orders";
+import Reviews from "./pages/Reviews";
 
 function ProtectedRoute({ children }) {
   const user = useSelector((state) => state.auth.user);
@@ -45,6 +46,7 @@ function App() {
         <Route path="/product/edit/:id"    element={<Protected><EditProduct /></Protected>} />  
         <Route path="/orders"       element={<Protected><Orders /></Protected>} />
         <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="/reviews" element={<Protected><Reviews /></Protected>} />
       </Routes>
     </BrowserRouter>
   );

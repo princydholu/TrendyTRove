@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
+
 // CORS
 app.use(cors({
   origin: function(origin, callback) {
@@ -22,6 +23,7 @@ app.use("/api/upload",     require("./routes/uploadRoutes"));
 app.use("/api/cart",       require("./routes/cartRoutes"));
 app.use("/api/orders",     require("./routes/orderRoutes"));
 app.use("/api/wishlist",   require("./routes/wishlistRoutes"));
+app.use("/api/reviews",    require("./routes/reviewRoutes"));
 
 // Health Check
 app.get("/", (req, res) => {

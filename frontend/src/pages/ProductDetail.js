@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -24,84 +24,103 @@ function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  // Reviews
+  const [reviews, setReviews] = useState([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [myRating, setMyRating] = useState(0);
+  const [myComment, setMyComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
+  const user = useSelector((state) => state.auth.user);
   const [error, setError] = useState("");
   const isWishlisted = useSelector(selectIsWishlisted(product?._id));
 
   const handleWishlist = async () => {
-  if (isWishlisted) {
-    dispatch(removeFromWishlistLocal(product._id));
-    await API.delete(`/wishlist/${product._id}`);
-  } else {
-    dispatch(addToWishlistLocal({ 
-      ...product,
-      _id: product._id,
-      // ✅ Selected image pass karo
-      selectedImage: selectedColor?.images?.[activeImage] || "",
-      selectedColor: selectedColor?.color || "",
-    }));
-    await API.post("/wishlist", { productId: product._id });
-  }
-};
+    if (isWishlisted) {
+      dispatch(removeFromWishlistLocal(product._id));
+      await API.delete(`/wishlist/${product._id}`);
+    } else {
+      dispatch(
+        addToWishlistLocal({
+          ...product,
+          _id: product._id,
+          // ✅ Selected image pass karo
+          selectedImage: selectedColor?.images?.[activeImage] || "",
+          selectedColor: selectedColor?.color || "",
+        }),
+      );
+      await API.post("/wishlist", { productId: product._id });
+    }
+  };
   // ── Fetch product ------------------------------------------------------------------------------------------------─────────────
- useEffect(() => {
-  setLoading(true);
-  API.get(`/products/${id}`)
-    .then((res) => {
-      const p = res.data.product;
-      setProduct(p);
- 
-     if (p.variants?.length > 0) {
-  const fromCart = location.state;
+  useEffect(() => {
+    setLoading(true);
+    API.get(`/products/${id}`)
+      .then((res) => {
+        const p = res.data.product;
+        setProduct(p);
 
-  const matchedVariant = fromCart?.variantId
-    ? p.variants.find((v) => String(v._id) === String(fromCart.variantId))
-    : fromCart?.color
-    ? p.variants.find((v) => v.color?.toLowerCase() === fromCart.color?.toLowerCase())
-    : null;
+        if (p.variants?.length > 0) {
+          const fromCart = location.state;
 
-  const activeVariant = matchedVariant || p.variants[0];
-  setSelectedColor(activeVariant);
+          const matchedVariant = fromCart?.variantId
+            ? p.variants.find(
+                (v) => String(v._id) === String(fromCart.variantId),
+              )
+            : fromCart?.color
+              ? p.variants.find(
+                  (v) =>
+                    v.color?.toLowerCase() === fromCart.color?.toLowerCase(),
+                )
+              : null;
 
-  const matchedSize = fromCart?.size
-    ? activeVariant.sizes?.find((s) => s.size?.toLowerCase() === fromCart.size?.toLowerCase())
-    : null;
+          const activeVariant = matchedVariant || p.variants[0];
+          setSelectedColor(activeVariant);
 
-  setSelectedSize(matchedSize || activeVariant.sizes?.[0] || null);
-}
-      // ── OLD schema fallback: colorGroups[] ──────────────────────────
-      else if (p.colorGroups?.length > 0) {
-        setSelectedColor({
-          color: p.colorGroups[0].colorName,
-          colorHex: p.colorGroups[0].colorHex,
-          images: p.colorGroups[0].images || [],
-          sizes: p.sizes?.map((s) => ({
-            size: s,
+          const matchedSize = fromCart?.size
+            ? activeVariant.sizes?.find(
+                (s) => s.size?.toLowerCase() === fromCart.size?.toLowerCase(),
+              )
+            : null;
+
+          setSelectedSize(matchedSize || activeVariant.sizes?.[0] || null);
+        }
+        // ── OLD schema fallback: colorGroups[] ──────────────────────────
+        else if (p.colorGroups?.length > 0) {
+          setSelectedColor({
+            color: p.colorGroups[0].colorName,
+            colorHex: p.colorGroups[0].colorHex,
+            images: p.colorGroups[0].images || [],
+            sizes: p.sizes?.map((s) => ({
+              size: s,
+              sellingPrice: p.price,
+              originalPrice: p.originalPrice || null,
+              discount: p.discount || null,
+            })) || [{ size: "Free Size", sellingPrice: p.price }],
+          });
+          setSelectedSize({
+            size: p.sizes?.[0] || "Free Size",
             sellingPrice: p.price,
             originalPrice: p.originalPrice || null,
             discount: p.discount || null,
-          })) || [{ size: "Free Size", sellingPrice: p.price }],
-        });
-        setSelectedSize({
-          size: p.sizes?.[0] || "Free Size",
-          sellingPrice: p.price,
-          originalPrice: p.originalPrice || null,
-          discount: p.discount || null,
-        });
-      }
-      // ── No variants at all ───────────────────────────────────────────
-      else {
-        setSelectedColor({
-          color: "",
-          colorHex: "#000000",
-          images: [],
-          sizes: [{ size: "Free Size", sellingPrice: p.price || 0 }],
-        });
-        setSelectedSize({ size: "Free Size", sellingPrice: p.price || 0 });
-      }
-    })
-    .catch(() => setError("Product not found"))
-    .finally(() => setLoading(false));
-}, [id , location.state]); 
+          });
+        }
+        // ── No variants at all ───────────────────────────────────────────
+        else {
+          setSelectedColor({
+            color: "",
+            colorHex: "#000000",
+            images: [],
+            sizes: [{ size: "Free Size", sellingPrice: p.price || 0 }],
+          });
+          setSelectedSize({ size: "Free Size", sellingPrice: p.price || 0 });
+        }
+      })
+      .catch(() => setError("Product not found"))
+      .finally(() => setLoading(false));
+  }, [id, location.state]);
 
   // ── Color / Size handlers ------------------------------------------------------------------------------------------------─────
   const handleColorSelect = (variant) => {
@@ -115,29 +134,35 @@ function ProductDetail() {
   };
 
   // ── Add to cart ------------------------------------------------------------------------------------------------───────────────
-const handleAddToCart = () => {
-  if (!selectedColor) { setError("Please select a color"); return; }
-  if (!selectedSize)  { setError("Please select a size");  return; }
-  setError("");
+  const handleAddToCart = () => {
+    if (!selectedColor) {
+      setError("Please select a color");
+      return;
+    }
+    if (!selectedSize) {
+      setError("Please select a size");
+      return;
+    }
+    setError("");
 
-  dispatch(
-    addToCart({
-      _id:       product._id,
-      variantId: selectedColor._id || selectedColor.color || "", // ← fix
-      product:   product._id,
-      name:      product.name,
-      price:     selectedSize.sellingPrice,
-      image:     selectedColor.images?.[activeImage] || "",
-      description: product.description || "",
-      size:      selectedSize.size,
-      color:     selectedColor.color,
-      quantity,
-    })
-  );
+    dispatch(
+      addToCart({
+        _id: product._id,
+        variantId: selectedColor._id || selectedColor.color || "", // ← fix
+        product: product._id,
+        name: product.name,
+        price: selectedSize.sellingPrice,
+        image: selectedColor.images?.[activeImage] || "",
+        description: product.description || "",
+        size: selectedSize.size,
+        color: selectedColor.color,
+        quantity,
+      }),
+    );
 
-  setAdded(true);
-  setTimeout(() => setAdded(false), 2000);
-};
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   // ── Buy now ------------------------------------------------------------------------------------------------───────────────────
   const handleBuyNow = () => {
@@ -151,12 +176,13 @@ const handleAddToCart = () => {
     }
     setError("");
     const cartItem = cartItems.find(
-  (c) =>
-    String(c._id) === String(product._id) &&
-    String(c.variantId || "") === String(selectedColor._id || selectedColor.color || "") &&
-    c.size  === selectedSize.size &&
-    c.color === selectedColor.color
-);
+      (c) =>
+        String(c._id) === String(product._id) &&
+        String(c.variantId || "") ===
+          String(selectedColor._id || selectedColor.color || "") &&
+        c.size === selectedSize.size &&
+        c.color === selectedColor.color,
+    );
 
     navigate("/checkout", {
       state: {
@@ -172,13 +198,60 @@ const handleAddToCart = () => {
             size: selectedSize.size,
             color: selectedColor.color,
             quantity,
-            itemId:    cartItem?.itemId || null, 
+            itemId: cartItem?.itemId || null,
           },
         ],
       },
     });
   };
 
+  // ── Fetch Reviews ──
+  const fetchReviews = useCallback(async () => {
+    if (!id) return;
+    setReviewLoading(true);
+    try {
+      const { data } = await API.get(`/reviews/${id}`);
+      setReviews(data.reviews || []);
+      setAvgRating(data.avgRating || 0);
+    } catch {
+    } finally {
+      setReviewLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  // ── Submit Review ──
+  const handleReviewSubmit = async () => {
+    if (!myRating) {
+      setReviewError("Please select a rating");
+      return;
+    }
+    if (!myComment.trim()) {
+      setReviewError("Please write a comment");
+      return;
+    }
+    setSubmitting(true);
+    setReviewError("");
+    setReviewSuccess("");
+    try {
+      await API.post("/reviews", {
+        productId: id,
+        rating: myRating,
+        comment: myComment,
+      });
+      setReviewSuccess("Review submitted! ✓");
+      setMyRating(0);
+      setMyComment("");
+      fetchReviews();
+    } catch (err) {
+      setReviewError(err?.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
   // ── Loading ------------------------------------------------------------------------------------------------───────────────────
   if (loading) {
     return (
@@ -480,6 +553,154 @@ const handleAddToCart = () => {
                   {text}
                 </p>
               ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Reviews Section ── */}
+      <div className="max-w-[1400px] mx-auto px-20 pb-20">
+        <div className="border-t border-[#e8e4de] pt-12">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <h2 className="font-['Cormorant_Garamond'] text-3xl font-light text-[#1a1a1a]">
+              Customer Reviews
+            </h2>
+            {avgRating > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <svg
+                      key={s}
+                      className={`w-4 h-4 ${s <= Math.round(avgRating) ? "text-[#c8a96e]" : "text-[#e8e4de]"}`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <span className="text-[12px] font-['Montserrat'] text-[#6b6b6b]">
+                  {avgRating} ({reviews.length} reviews)
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* ── Write Review ── */}
+            {user && (
+              <div className="bg-white border border-[#e8e4de] p-6">
+                <h3 className="text-[10px] tracking-[3px] font-semibold font-['Montserrat'] text-[#1a1a1a] mb-5">
+                  WRITE A REVIEW
+                </h3>
+
+                {/* Star Rating */}
+                <div className="mb-4">
+                  <p className="text-[9px] tracking-[2px] text-[#9b9b9b] font-['Montserrat'] mb-2">
+                    RATING *
+                  </p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button key={s} onClick={() => setMyRating(s)}>
+                        <svg
+                          className={`w-6 h-6 transition-colors ${s <= myRating ? "text-[#c8a96e]" : "text-[#e8e4de] hover:text-[#c8a96e]"}`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div className="mb-4">
+                  <p className="text-[9px] tracking-[2px] text-[#9b9b9b] font-['Montserrat'] mb-2">
+                    COMMENT *
+                  </p>
+                  <textarea
+                    value={myComment}
+                    onChange={(e) => setMyComment(e.target.value)}
+                    rows={4}
+                    placeholder="Share your experience..."
+                    className="w-full border border-[#e8e4de] px-4 py-3 text-[12px] font-['Montserrat'] text-[#1a1a1a] outline-none resize-none focus:border-[#1a1a1a] transition-colors"
+                  />
+                </div>
+
+                {reviewError && (
+                  <p className="text-red-400 text-[11px] font-['Montserrat'] mb-3">
+                    {reviewError}
+                  </p>
+                )}
+                {reviewSuccess && (
+                  <p className="text-emerald-500 text-[11px] font-['Montserrat'] mb-3">
+                    {reviewSuccess}
+                  </p>
+                )}
+
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={submitting}
+                  className="w-full py-3 bg-[#1a1a1a] text-white text-[10px] tracking-[3px] font-semibold font-['Montserrat'] hover:bg-[#3d3020] transition-all disabled:opacity-50"
+                >
+                  {submitting ? "SUBMITTING..." : "SUBMIT REVIEW"}
+                </button>
+              </div>
+            )}
+
+            {/* ── Reviews List ── */}
+            <div className="flex flex-col gap-4">
+              {reviewLoading ? (
+                <p className="text-[10px] tracking-[2px] text-[#9b9b9b] font-['Montserrat'] animate-pulse">
+                  Loading reviews...
+                </p>
+              ) : reviews.length === 0 ? (
+                <p className="text-[12px] text-[#9b9b9b] font-['Montserrat'] italic">
+                  No reviews yet. Be the first!
+                </p>
+              ) : (
+                reviews.map((r) => (
+                  <div
+                    key={r._id}
+                    className="bg-white border border-[#e8e4de] p-5"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-white text-[10px] font-semibold font-['Montserrat']">
+                          {r.user?.name?.[0]?.toUpperCase()}
+                        </div>
+                        <p className="text-[12px] font-medium font-['Montserrat'] text-[#1a1a1a]">
+                          {r.user?.name}
+                        </p>
+                      </div>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <svg
+                            key={s}
+                            className={`w-3.5 h-3.5 ${s <= r.rating ? "text-[#c8a96e]" : "text-[#e8e4de]"}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-[#6b6b6b] font-['Montserrat'] leading-relaxed">
+                      {r.comment}
+                    </p>
+                    <p className="text-[9px] text-[#b0a898] font-['Montserrat'] mt-2">
+                      {new Date(r.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
