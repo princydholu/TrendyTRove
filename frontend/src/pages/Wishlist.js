@@ -170,7 +170,7 @@ const handleClear = async () => {
             Save pieces you love by tapping the heart icon
           </p>
           <button
-            onClick={() => navigate("/homedecore")}
+            onClick={() => navigate("/new")}
             className="bg-[#1a1a1a] text-white text-[10px] tracking-[3px] font-semibold px-8 py-4 font-['Montserrat'] hover:bg-[#3d3020] transition-all duration-300"
           >
             CONTINUE SHOPPING

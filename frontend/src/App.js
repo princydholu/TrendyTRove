@@ -57,7 +57,6 @@ function App() {
           <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
           <Route path=":category/:subcategory" element={<CategoryPage />} />
           <Route path=":category" element={<CategoryPage />} />
-          {/*No wildcard, no /admin route */}
           
         </Route>
       </Routes>

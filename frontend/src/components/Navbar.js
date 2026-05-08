@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCartItems } from "../redux/slices/cartSlice";
-import { selectWishlistCount } from "../redux/slices/wishlistSlice";
+import { selectCartItems, clearCart } from "../redux/slices/cartSlice";
+import { selectWishlistCount, setWishlist, clearWishlistLocal } from "../redux/slices/wishlistSlice";
 import { logout } from "../redux/slices/authSlice";
-import { setWishlist } from "../redux/slices/wishlistSlice";
 import Logo from "./Logo";
 import MegaMenu from "./MegaMenu";
 import API from "../api/axios";
+import { setCartFromBackend } from "../redux/slices/cartSlice";
 
 function Navbar() {
   const [scrolled,     setScrolled]     = useState(false);
@@ -36,14 +36,41 @@ function Navbar() {
       .catch(console.error);
   }, []);
 
+  // Add this useEffect (after your existing wishlist sync useEffect)
+useEffect(() => {
+  if (!user) return;
+
+  const syncCart = async () => {
+    try {
+      const res = await API.get("/cart");
+      const mapped = (res.data.cart?.items || []).map((i) => ({
+        _id:       i.productId?._id || i.productId,
+        product:   i.productId?._id || i.productId,
+        itemId:    i._id,
+        name:      i.productId?.name || "",
+        image:     i.image || i.productId?.variants?.find((v) => v.color === i.color)?.images?.[0] || "",
+        price:     i.price,
+        size:      i.size  || "",
+        color:     i.color || "",
+        variantId: i.variantId || "",
+        quantity:  i.quantity,
+      }));
+      dispatch(setCartFromBackend(mapped));
+    } catch {}
+  };
+
+  syncCart();
+}, [user, dispatch]);
+
   // ── Sync wishlist from backend when user logs in ───────────────────────────
   useEffect(() => {
-    if (user) {
-      API.get("/wishlist").then((res) =>
-        dispatch(setWishlist(res.data.products || []))
-      );
-    }
-  }, [user, dispatch]);
+  if (user) {
+    API.get("/wishlist").then((res) =>
+      dispatch(setWishlist(res.data.products || []))
+    );
+    
+  }
+}, [user, dispatch]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -60,11 +87,13 @@ function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    setProfileOpen(false);
-    navigate("/");
-  };
+const handleLogout = () => {
+  dispatch(clearCart());
+  dispatch(clearWishlistLocal());
+  dispatch(logout());
+  setProfileOpen(false);
+  navigate("/");
+};
 
   const isWhite = scrolled || activeMenu || location.pathname !== "/";
 
@@ -125,7 +154,7 @@ function Navbar() {
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            {/* ✅ Count badge — only shows when wishlist has items */}
+            {/*  Count badge — only shows when wishlist has items */}
             {wishlistCount > 0 && (
               <span
                 className={`absolute -top-1.5 -right-1.5 text-[9px] font-semibold w-4 h-4 rounded-full flex items-center justify-center font-['Montserrat'] ${

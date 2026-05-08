@@ -35,54 +35,53 @@ function Cart() {
 
   // ── Sync guest cart to backend when user logs in ──────────────────────────
   useEffect(() => {
-    if (!user) return;
+  if (!user) return;
 
-    const syncCart = async () => {
-      setSyncing(true);
-      try {
-        const res = await API.get("/cart");
-        const backendItems = res.data.cart?.items || [];
+  const syncCart = async () => {
+  setSyncing(true);
+  try {
+    const res = await API.get("/cart");
+    const backendItems = res.data.cart?.items || [];
 
-        for (const item of items) {
-          const alreadyInBackend = backendItems.find(
-            (b) =>
-              String(b.productId?._id || b.productId) === String(item._id) &&
-              b.size?.toLowerCase()  === (item.size  || "").toLowerCase() &&
-              b.color?.toLowerCase() === (item.color || "").toLowerCase()
-          );
-          if (!alreadyInBackend) {
-            await API.post("/cart", {
-              productId: item._id,
-              quantity:  item.quantity,
-              size:      item.size  || "",
-              color:     item.color || "",
-            });
-          }
-        }
-
-        const finalRes = await API.get("/cart");
-        const mapped = (finalRes.data.cart?.items || []).map((i) => ({
-          _id:       i.productId?._id || i.productId,
-          product:   i.productId?._id || i.productId,
-          itemId:    i._id,
-          name:      i.productId?.name || "",
-          image:     i.image || i.productId?.variants?.find((v) => v.color === i.color)?.images?.[0] || "",
-          price:     i.price,
-          size:      i.size  || "",
-          color:     i.color || "",
-          variantId: i.variantId || "",
-          quantity:  i.quantity,
-        }));
-        dispatch(setCartFromBackend(mapped));
-      } catch {
-        // keep local cart on failure
-      } finally {
-        setSyncing(false);
+    for (const item of items) {
+      const alreadyInBackend = backendItems.find(
+        (b) =>
+          String(b.productId?._id || b.productId) === String(item._id) &&
+          b.size?.toLowerCase() === (item.size || "").toLowerCase() &&
+          b.color?.toLowerCase() === (item.color || "").toLowerCase()
+      );
+      if (!alreadyInBackend) {
+        await API.post("/cart", {
+          productId: item._id,
+          quantity: item.quantity,
+          size: item.size || "",
+          color: item.color || "",
+        });
       }
-    };
+    }
 
-    syncCart();
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    const finalRes = await API.get("/cart");
+    const mapped = (finalRes.data.cart?.items || []).map((i) => ({
+      _id: i.productId?._id || i.productId,
+      product: i.productId?._id || i.productId,
+      itemId: i._id,
+      name: i.productId?.name || "",
+      image: i.productId?.variants?.find((v) => v.color === i.color)?.images?.[0] || "",
+      price: i.price,
+      size: i.size || "",
+      color: i.color || "",
+      variantId: i.variantId || "",
+      quantity: i.quantity,
+    }));
+    dispatch(setCartFromBackend(mapped));
+  } catch {
+  } finally {
+    setSyncing(false);
+  }
+};
+
+  syncCart();
+}, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   const showToast = (msg, type = "success") => {

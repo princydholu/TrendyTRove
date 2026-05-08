@@ -135,34 +135,28 @@ function ProductDetail() {
 
   // ── Add to cart ------------------------------------------------------------------------------------------------───────────────
   const handleAddToCart = () => {
-    if (!selectedColor) {
-      setError("Please select a color");
-      return;
-    }
-    if (!selectedSize) {
-      setError("Please select a size");
-      return;
-    }
-    setError("");
+  if (!selectedColor) { setError("Please select a color"); return; }
+  if (!selectedSize) { setError("Please select a size"); return; }
+  setError("");
 
-    dispatch(
-      addToCart({
-        _id: product._id,
-        variantId: selectedColor._id || selectedColor.color || "", // ← fix
-        product: product._id,
-        name: product.name,
-        price: selectedSize.sellingPrice,
-        image: selectedColor.images?.[activeImage] || "",
-        description: product.description || "",
-        size: selectedSize.size,
-        color: selectedColor.color,
-        quantity,
-      }),
-    );
+  dispatch(addToCart({
+    _id: product._id,
+    variantId: selectedColor._id || selectedColor.color || "",
+    product: product._id,
+    name: product.name,
+    price: selectedSize.sellingPrice,
+    image: selectedColor.images?.[activeImage] || "",
+    description: product.description || "",
+    size: selectedSize.size,
+    color: selectedColor.color,
+    quantity,
+  }));
 
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
+  // 👈 API.post("/cart") REMOVE KARI NAKHO
+
+  setAdded(true);
+  setTimeout(() => setAdded(false), 2000);
+};
 
   // ── Buy now ------------------------------------------------------------------------------------------------───────────────────
   const handleBuyNow = () => {
