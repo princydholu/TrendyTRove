@@ -59,12 +59,17 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid payment signature" });
     }
 
+    // free shiping logic
+
+    const shippingCharge = amount >= 1000 ? 0 : 99;
+    const finalAmount = amount + shippingCharge; 
     // Save order
     const order = await Order.create({
       customer:          req.user._id,
       items,
       address,
-      amount,
+      amount :  finalAmount, 
+      shippingCharge,   
       paymentMethod:     "Razorpay",
       paymentStatus:     "Paid",
       razorpayOrderId,

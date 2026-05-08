@@ -42,7 +42,7 @@ function Footer() {
             ["Vintage Jewellery", "/vintage-jewellery"],
             ["Candle",            "/candle"],
             ["Lamps",             "/lamps"],
-            ["Home Décor",        "/homedecore"],   // fixed path
+            ["Home-Decor",        "/home-decor"],   
           ].map(([label, path]) => (
             <button
               key={label}

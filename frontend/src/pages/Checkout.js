@@ -122,7 +122,7 @@ function Checkout() {
     (sum, i) => sum + (i.price || i.sellingPrice || 0) * i.quantity,
     0
   );
-  const shippingCost = totalAmount >= 5000 ? 0 : 99;
+  const shippingCost = totalAmount >= 1000 ? 0 : 99;
   const grandTotal   = totalAmount + shippingCost;
 
   const [address, setAddress] = useState({
@@ -475,7 +475,7 @@ handler: async (response) => {
               </div>
               {shippingCost > 0 && (
                 <p className="text-[9px] text-[#b0a898] font-['Montserrat'] mb-3">
-                  Add ₹{(5000 - totalAmount).toLocaleString("en-IN")} more for free shipping
+                  Add ₹{(1000 - totalAmount).toLocaleString("en-IN")} more for free shipping
                 </p>
               )}
               <div className="w-full h-px bg-[#e8e8e8] my-3" />

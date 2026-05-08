@@ -164,7 +164,9 @@ function Orders() {
     if (!validateAll()) return;
     setSaving(true); setEditSaveError("");
     try {
-      await API.put(`/orders/admin/${editOrder._id}`, { orderStatus: editOrder.orderStatus, paymentStatus: editOrder.paymentStatus });
+      await API.put(`/orders/admin/${editOrder._id}/status`, {
+  status: editOrder.orderStatus,         // ← status કરો
+});
       setOrders((prev) => prev.map((o) => o._id===editOrder._id ? {...o, orderStatus:editOrder.orderStatus, paymentStatus:editOrder.paymentStatus} : o));
       setEditOrder(null);
     } catch (err) { setEditSaveError(err?.response?.data?.message || "Failed to update order."); }

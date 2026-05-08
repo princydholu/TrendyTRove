@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost/api",  // works on all devices via nginx
+  baseURL: "http://localhost:5000/api",
 });
 
-// Automatically adds token to every request
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("trendytroveToken");
   if (token) {

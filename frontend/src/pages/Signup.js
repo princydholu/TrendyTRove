@@ -25,35 +25,37 @@ function Signup() {
     setServerError("");
   };
 
- const validate = () => {
-  const newErrors = {};
-  if (!formData.name.trim()) newErrors.name = "Name is required";
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required";
 
-  if (!formData.email.trim()) newErrors.email = "Email is required";
-  else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email format";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Invalid email format";
 
-  if (!formData.password) {
-    newErrors.password = "Password is required";
-  } else if (formData.password.length < 8) {
-    newErrors.password = "Minimum 8 characters required";
-  } else if (!/[A-Z]/.test(formData.password)) {
-    newErrors.password = "Must contain at least 1 uppercase letter";
-  } else if (!/[a-z]/.test(formData.password)) {
-    newErrors.password = "Must contain at least 1 lowercase letter";
-  } else if (!/[0-9]/.test(formData.password)) {
-    newErrors.password = "Must contain at least 1 number";
-  } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-    newErrors.password = "Must contain at least 1 special character (!@#$%^&*)";
-  }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Minimum 8 characters required";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Must contain at least 1 uppercase letter";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Must contain at least 1 lowercase letter";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Must contain at least 1 number";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password =
+        "Must contain at least 1 special character (!@#$%^&*)";
+    }
 
-  if (!formData.confirm) {
-    newErrors.confirm = "Please confirm your password";
-  } else if (formData.confirm !== formData.password) {
-    newErrors.confirm = "Passwords don't match";
-  }
+    if (!formData.confirm) {
+      newErrors.confirm = "Please confirm your password";
+    } else if (formData.confirm !== formData.password) {
+      newErrors.confirm = "Passwords don't match";
+    }
 
-  return newErrors;
-};
+    return newErrors;
+  };
 
   const handleSubmit = async () => {
     const validationErrors = validate();
@@ -154,68 +156,64 @@ function Signup() {
           </div>
 
           {/* Password */}
-<div className="relative">
-  <input
-    type={showPass ? "text" : "password"}
-    name="password"
-    placeholder="Password"
-    value={formData.password}
-    onChange={handleChange}
-    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-    className={`w-full border px-4 py-3 pr-10 text-[12px] tracking-wide font-['Montserrat'] text-[#1a1a1a] outline-none transition-all duration-300 ${
-      errors.password
-        ? "border-red-400"
-        : "border-[#e8e8e8] focus:border-[#1a1a1a]"
-    }`}
-  />
-  <button
-    type="button"
-    onClick={() => setShowPass(!showPass)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9b9b9b] hover:text-[#1a1a1a] transition-colors bg-transparent border-none cursor-pointer text-xs"
-  >
-    {showPass ? "HIDE" : "SHOW"}
-  </button>
-</div>
-{/* ✅ ADD THIS — was missing */}
-{errors.password && (
-  <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
-    {errors.password}
-  </p>
-)}
+          <div className="relative">
+            <input
+              type={showPass ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              className={`w-full border px-4 py-3 pr-10 text-[12px] tracking-wide font-['Montserrat'] text-[#1a1a1a] outline-none transition-all duration-300 ${
+                errors.password
+                  ? "border-red-400"
+                  : "border-[#e8e8e8] focus:border-[#1a1a1a]"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass(!showPass)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9b9b9b] hover:text-[#1a1a1a] transition-colors bg-transparent border-none cursor-pointer text-xs"
+            >
+              {showPass ? "HIDE" : "SHOW"}
+            </button>
+          </div>
+          {/* ✅ ADD THIS — was missing */}
+          {errors.password && (
+            <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
+              {errors.password}
+            </p>
+          )}
 
-{/* Confirm Password */}
-<div className="relative">
-  <input
-    type={showConfirm ? "text" : "password"}
-    name="confirm"
-    placeholder="Confirm Password"
-    value={formData.confirm}
-    onChange={handleChange}
-    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-    className={`w-full border px-4 py-3 pr-10 text-[12px] tracking-wide font-['Montserrat'] text-[#1a1a1a] outline-none transition-all duration-300 ${
-      errors.confirm
-        ? "border-red-400"
-        : "border-[#e8e8e8] focus:border-[#1a1a1a]"
-    }`}
-  />
-  <button
-    type="button"
-    onClick={() => setShowConfirm(!showConfirm)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9b9b9b] hover:text-[#1a1a1a] transition-colors bg-transparent border-none cursor-pointer text-xs"
-  >
-    {showConfirm ? "HIDE" : "SHOW"}
-  </button>
-</div>
-{/* ✅ ADD THIS — was missing */}
-{errors.confirm && (
-  <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
-    {errors.confirm}
-  </p>
-)}
-
-         
-        
-
+          {/* Confirm Password */}
+          <div className="relative">
+            <input
+              type={showConfirm ? "text" : "password"}
+              name="confirm"
+              placeholder="Confirm Password"
+              value={formData.confirm}
+              onChange={handleChange}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              className={`w-full border px-4 py-3 pr-10 text-[12px] tracking-wide font-['Montserrat'] text-[#1a1a1a] outline-none transition-all duration-300 ${
+                errors.confirm
+                  ? "border-red-400"
+                  : "border-[#e8e8e8] focus:border-[#1a1a1a]"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9b9b9b] hover:text-[#1a1a1a] transition-colors bg-transparent border-none cursor-pointer text-xs"
+            >
+              {showConfirm ? "HIDE" : "SHOW"}
+            </button>
+          </div>
+          {/* ✅ ADD THIS — was missing */}
+          {errors.confirm && (
+            <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
+              {errors.confirm}
+            </p>
+          )}
         </div>
 
         <button

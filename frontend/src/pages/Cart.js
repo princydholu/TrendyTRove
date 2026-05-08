@@ -136,7 +136,7 @@ function Cart() {
   };
 
   // ── Shipping & totals ─────────────────────────────────────────────────────
-  const shipping   = total >= 5000 ? 0 : 199;
+  const shipping = total >= 1000 ? 0 : 99;
   const grandTotal = total + shipping;
 
   // ── Razorpay ──────────────────────────────────────────────────────────────
@@ -368,7 +368,7 @@ function Cart() {
               </div>
               {shipping > 0 && (
                 <p className="text-[9px] tracking-[1px] text-[#b0a898] font-['Montserrat']">
-                  Add ₹{(5000 - total).toLocaleString("en-IN")} more for free shipping
+                  Add ₹{(1000 - total).toLocaleString("en-IN")} more for free shipping
                 </p>
               )}
             </div>

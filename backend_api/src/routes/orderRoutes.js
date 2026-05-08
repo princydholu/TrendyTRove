@@ -10,6 +10,13 @@ const {
    deleteOrder,
 } = require("../controllers/orderController");
 
+
+router.get("/shipping-charge", protect, (req, res) => {
+  const amount = Number(req.query.amount) || 0;
+  const shippingCharge = amount >= 1000 ? 0 : 50;
+  res.json({ success: true, shippingCharge, isFreeShipping: amount >= 1000 });
+});
+
 router.post("/create-razorpay-order", protect, createRazorpayOrder);
 router.post("/place",                 protect, placeOrder);
 router.get("/my-orders",              protect, getMyOrders);

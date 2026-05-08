@@ -32,6 +32,7 @@ const orderSchema = new mongoose.Schema({
     enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
     default: "Processing",
   },
+  shippingCharge: { type: Number, default: 50 },
 }, { timestamps: true });
 
 orderSchema.pre("save", async function () {
