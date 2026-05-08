@@ -44,6 +44,10 @@ function Login() {
     try {
       const { data } = await API.post("/auth/admin/login", { email: formData.email.trim(), password: formData.password });
       localStorage.setItem("adminToken", data.token);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 675f20ab7278e8eabe688050868e3204a775aafb
       dispatch(loginSuccess(data.user));
       navigate("/dashboard");
     } catch (err) { setServerError(err.response?.data?.message || "Server error!"); }

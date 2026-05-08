@@ -15,7 +15,11 @@ import Orders from "./pages/orders";
 
 function ProtectedRoute({ children }) {
   const user = useSelector((state) => state.auth.user);
-  return user ? children : <Navigate to="/login" />;
+  
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== "admin") return <Navigate to="/login" />;
+  
+  return children;
 }
 
 const Protected = ({ children }) => (

@@ -23,9 +23,7 @@ function Login() {
     const newErrors = {};
     if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email format";
-
     if (!formData.password) newErrors.password = "Password is required";
-
     return newErrors;
   };
 
@@ -46,7 +44,13 @@ function Login() {
       localStorage.setItem("trendytroveToken", data.token);
       localStorage.setItem("trendytroveUser", JSON.stringify(data.user));
       dispatch(login(data.user));
-      navigate("/");
+
+      // Role-based redirect
+      if (data.user.role === "admin") {
+        window.location.href = "http://localhost:3001/admin/dashboard";
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setServerError(err.response?.data?.message || "Invalid email or password");
     } finally {
@@ -80,8 +84,7 @@ function Login() {
         )}
 
         <div className="flex flex-col gap-4">
-
-          {/* ── Email ── */}
+          {/* Email */}
           <div>
             <input
               type="email"
@@ -93,15 +96,12 @@ function Login() {
                 errors.email ? "border-red-400" : "border-[#e8e8e8] focus:border-[#1a1a1a]"
               }`}
             />
-            {/* ✅ Only email error here */}
             {errors.email && (
-              <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
-                {errors.email}
-              </p>
+              <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">{errors.email}</p>
             )}
           </div>
 
-          {/* ── Password ── */}
+          {/* Password */}
           <div>
             <div className="relative">
               <input
@@ -123,14 +123,10 @@ function Login() {
                 {showPass ? "HIDE" : "SHOW"}
               </button>
             </div>
-            {/* ✅ Password error correctly placed here, outside relative div but inside password div */}
             {errors.password && (
-              <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">
-                {errors.password}
-              </p>
+              <p className="text-red-400 text-[10px] mt-1 font-['Montserrat']">{errors.password}</p>
             )}
           </div>
-
         </div>
 
         <button
